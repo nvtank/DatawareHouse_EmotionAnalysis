@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: public 
+    description: Raw data schema from PostgreSQL
+    tables:
+      - name: stg_affectnet_raw 
+        description: Raw AffectNet results (simulated) loaded via Python.
