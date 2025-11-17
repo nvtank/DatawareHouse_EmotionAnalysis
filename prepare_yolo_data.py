@@ -2,18 +2,16 @@ import pandas as pd
 import random
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
-# --- CẤU HÌNH ---
-# !! QUAN TRỌNG: 
-# !! 1. TÌM THƯ MỤC 'labels' CỦA BẠN (ví dụ: .../train/labels)
-# !! 2. DÁN ĐƯỜNG DẪN ĐÓ VÀO BIẾN LABELS_DIR DƯỚI ĐÂY
-LABELS_DIR = "/home/nvtank/year3/ki1/kdl/datawarehouse/data/archive/YOLO_format/train/labels" 
 
-OUTPUT_FILE = 'data/affectnet_processed_results.csv'
-MAX_FILES_TO_PROCESS = 5000 # Giới hạn 5000 file để chạy thử
-# --- KẾT THÚC CẤU HÌNH ---
+# Get the directory where this script is located
+BASE_DIR = Path(__file__).resolve().parent
+LABELS_DIR = BASE_DIR / "data" / "archive" / "YOLO_format" / "train" / "labels"
 
-# Ánh xạ class (từ file data.yaml của bạn)
+OUTPUT_FILE = BASE_DIR / 'data' / 'affectnet_processed_results.csv'
+MAX_FILES_TO_PROCESS = 5000 
+
 EMOTION_MAP = {
     0: "Anger",
     1: "Contempt",
@@ -26,10 +24,9 @@ EMOTION_MAP = {
 }
 
 def simulate_ai_results(true_emotion):
-    """Giả lập kết quả đầu ra của mô hình AI"""
+    """Simulate AI model output results"""
     emotion_list = list(EMOTION_MAP.values())
     
-    # 30% mô hình dự đoán sai
     if random.random() < 0.3: 
         predicted_emotion = random.choice([e for e in emotion_list if e != true_emotion])
     else:
@@ -43,39 +40,42 @@ def simulate_ai_results(true_emotion):
     return predicted_emotion, confidence, valence, arousal, model_version
 
 def process_yolo_labels():
-    print(f"Bắt đầu đọc file annotation thật từ: {LABELS_DIR}")
+    print(f"Starting to read real annotation files from: {LABELS_DIR}")
+    
+    # Create output directory if it doesn't exist
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     
     results = []
     start_time = datetime(2025, 1, 1)
     
     try:
         all_files = [f for f in os.listdir(LABELS_DIR) if f.endswith('.txt')]
-        print(f"Tìm thấy {len(all_files)} file annotation.")
+        print(f"Found {len(all_files)} annotation files.")
         
-        # Giới hạn số lượng file để chạy nhanh
+
         files_to_process = all_files[:MAX_FILES_TO_PROCESS]
-        print(f"Sẽ xử lý {len(files_to_process)} file...")
+        print(f"Will process {len(files_to_process)} files...")
 
         for index, filename in enumerate(files_to_process):
-            image_id = filename.replace('.txt', '.jpg') # Tên file ảnh
-            filepath = os.path.join(LABELS_DIR, filename)
+            image_id = filename.replace('.txt', '.jpg') # Image filename
+            filepath = os.path.join(str(LABELS_DIR), filename)
             
             with open(filepath, 'r') as f:
                 line = f.readline().strip()
                 if not line:
                     continue
                     
-                # Đọc dòng đầu tiên (file YOLO thường chỉ có 1 dòng)
+                # Read the first line (YOLO files usually have only 1 line)
                 class_index = int(line.split()[0])
                 true_emotion = EMOTION_MAP.get(class_index, "Unknown")
                 
                 if true_emotion == "Unknown":
                     continue
                 
-                # Giả lập kết quả AI
+                # Simulate AI results
                 pred_emotion, conf, val, aro, model = simulate_ai_results(true_emotion)
                 
-                # Giả lập metadata
+                # Simulate metadata
                 timestamp = start_time + timedelta(seconds=index)
                 subject_id = f"Sub_{random.randint(1, 500)}"
                 age_group = random.choice(['20-30', '30-40', '40-50'])
@@ -93,20 +93,20 @@ def process_yolo_labels():
                     'age_group': age_group
                 })
 
-        # Chuyển kết quả thành DataFrame
+        # Convert results to DataFrame
         df_processed = pd.DataFrame(results)
         
-        # Lưu ra file CSV (file này sẽ được dùng cho Bước 2)
-        df_processed.to_csv(OUTPUT_FILE, index=False)
+        # Save to CSV file (used for Step 2)
+        df_processed.to_csv(str(OUTPUT_FILE), index=False)
         
-        print(f"\n--- THÀNH CÔNG! ---")
-        print(f"Đã tạo file '{OUTPUT_FILE}' với {len(df_processed)} dòng dữ liệu THẬT (đã mô phỏng kết quả).")
+        print(f"\n--- SUCCESS! ---")
+        print(f"Created file '{OUTPUT_FILE}' with {len(df_processed)} rows of REAL data (with simulated results).")
 
     except FileNotFoundError:
-        print(f"Lỗi: Không tìm thấy thư mục '{LABELS_DIR}'.")
-        print("Vui lòng kiểm tra lại đường dẫn và cập nhật biến LABELS_DIR.")
+        print(f"Error: Directory '{LABELS_DIR}' not found.")
+        print("Please check the path and update the LABELS_DIR variable.")
     except Exception as e:
-        print(f"Đã xảy ra lỗi: {e}")
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     process_yolo_labels()
