@@ -8,6 +8,7 @@ SELECT
     confidence_score,
     predicted_valence_score,
     predicted_arousal_score,
+    age_group,  
     
     -- Tạo một cột mới (chỉ số): 1 nếu dự đoán đúng, 0 nếu sai
     CASE
