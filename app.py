@@ -50,7 +50,7 @@ def load_data():
         d_emo.valence_benchmark,
         d_emo.arousal_benchmark,
         d_sub.age_group,
-        d_mod.model_version_name AS model_name,đ
+        d_mod.model_version_name AS model_name,
         d_time.date_actual,
         d_time.day_of_week_name
         
